@@ -1,14 +1,16 @@
-FROM node:11.11 AS build-deps
-WORKDIR /usr/src/app
+FROM node:11.11 AS build-stage
+WORKDIR /app
 COPY package.json yarn.lock ./
-run npm i
+RUN npm i
 COPY . ./
-RUN npm build
+# RUN CI=true npm test
+RUN npm run build
 
-FROM nginx:1.17-alpine
-COPY --from:build-deps /usr/src/app/build /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+FROM nginx:1.17
+COPY --from=build-stage /app/build/ /usr/share/nginx/html
+COPY --from=build-stage /app/nginx.conf /etc/nginx/conf.d/default.conf
+#EXPOSE 80
+# CMD ["nginx", "-g", "daemon off;"]
 
 # docker build . -t ppichier/red_tetris
 #docker run -p 8080:80 ppichier/red_tetris
